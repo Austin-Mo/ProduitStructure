@@ -6,6 +6,7 @@ import matplotlib.dates as mdates
 from backend.data.rate_curve import ZeroCouponCurve
 from datetime import timedelta
 
+
 class Models:
     def __init__(self, spot_price, strike, risk_free_rate, maturity, dividend_yield, volatility):
         self.spot_price = spot_price
@@ -17,8 +18,8 @@ class Models:
 
     def black_scholes(self, call_or_put='call'):
         d1 = (np.log(self.spot_price / self.strike) + (
-                    self.risk_free_rate - self.dividend_yield + 0.5 * self.volatility ** 2) * self.maturity) / (
-                         self.volatility * np.sqrt(self.maturity))
+                self.risk_free_rate - self.dividend_yield + 0.5 * self.volatility ** 2) * self.maturity) / (
+                     self.volatility * np.sqrt(self.maturity))
         d2 = d1 - self.volatility * np.sqrt(self.maturity)
         if call_or_put == 'call':
             return self.spot_price * np.exp(-self.dividend_yield * self.maturity) * norm.cdf(d1) - self.strike * np.exp(
@@ -29,7 +30,7 @@ class Models:
 
 
 class Autocall:
-    def __init__(self, monte_carlo,strat, nominal, coupon_rate, coupon_barrier, autocall_barrier, put_barrier):
+    def __init__(self, monte_carlo, strat, nominal, coupon_rate, coupon_barrier, autocall_barrier, put_barrier):
         self.monte_carlo = monte_carlo
         self.nominal = nominal
         self.strat = strat
@@ -48,7 +49,7 @@ class Autocall:
         return np.exp(-self.risk_free.interpolate_rate(date=date) * time)
 
     def generate_payoffs(self):
-        
+
         # Obtenir le nombre d'étapes et de simulations pour l'actif actuel
         num_steps = len(self.monte_carlo.observation_dates)
         num_simulations = self.monte_carlo.num_simu
@@ -63,8 +64,8 @@ class Autocall:
                 df = self.monte_carlo.simulations[0]
             else:
                 df = self.choice_asset_worstoff_bestoff(time_step)
-            
-            total_payment, no_redemption_condition = self.payoff_by_step(df,step,time_step)
+
+            total_payment, no_redemption_condition = self.payoff_by_step(df, step, time_step)
 
             # Stocker le paiement total et le paiement total actualisé à l'étape courante
             payoffs_actif[step, :] = total_payment
@@ -83,7 +84,8 @@ class Autocall:
 
         # Boucle sur toutes les simulations
         for i in range(len(no_redemption_condition)):
-            # Si il n'y a pas eu déjà de redemption, que le barrière put a au moins été franchit une fois et que le dernier prix est inférieur au prix initial alors il faut imputer la perte
+            # Si il n'y a pas eu déjà de redemption, que le barrière put a au moins été franchit une fois et que le
+            # dernier prix est inférieur au prix initial alors il faut imputer la perte
             if no_redemption_condition[i] and put_condition[i] and (final_price_ratios[i] < 1):
                 # J'annule tous les paiements de coupons précédents
                 payoffs_actif[:, i] = discounted_payoffs_actif[:, i] = 0
@@ -96,12 +98,12 @@ class Autocall:
 
         # Créer des DataFrames pour les payoffs et les payoffs actualisés et les ajouter aux listes
         df_payoffs = pd.DataFrame(payoffs_actif, index=self.monte_carlo.observation_dates,
-                                    columns=[f'Simulation {sim + 1}' for sim in range(num_simulations)])
+                                  columns=[f'Simulation {sim + 1}' for sim in range(num_simulations)])
         df_discounted_payoffs = pd.DataFrame(discounted_payoffs_actif, index=self.monte_carlo.observation_dates,
-                                                columns=[f'Simulation {sim + 1}' for sim in range(num_simulations)])
-        return df_payoffs,df_discounted_payoffs
-    
-    def payoff_by_step(self,df,step,time_step):
+                                             columns=[f'Simulation {sim + 1}' for sim in range(num_simulations)])
+        return df_payoffs, df_discounted_payoffs
+
+    def payoff_by_step(self, df, step, time_step):
         # Obtenir les prix courants et les prix initiaux pour calculer les ratios de prix
         current_prices = df.loc[time_step].values
         initial_prices = df.iloc[0].values
@@ -122,7 +124,6 @@ class Autocall:
             # Si nous sommes à la première observation, utiliser les ratios actuels comme max_ratios
             max_price_ratios = price_ratios
             no_redemption_condition = True
-        
 
         num_steps = len(self.monte_carlo.observation_dates)
         # À la dernière étape, s'assurer de payer le nominal si la barrière put n'a pas été franchit et si les conditions d'autocall ne sont pas remplies
@@ -136,22 +137,21 @@ class Autocall:
         redemption_payment = self.nominal * autocall_condition * no_redemption_condition
         total_payment = coupon_payment + redemption_payment
 
-        return total_payment,no_redemption_condition
-
+        return total_payment, no_redemption_condition
 
     def choice_asset_worstoff_bestoff(self, time_step):
         # Initialiser une variable pour stocker le meilleur ou le pire ratio de prix
         best_price_ratio = -np.inf  # Car nous cherchons le maximum
         worst_price_ratio = np.inf  # Car nous cherchons le minimum
         selected_df = None  # Pour stocker le DataFrame sélectionné
-        
+
         # Itérer sur tous les DataFrames (pour chaque sous-jacent)
         for df in self.monte_carlo.simulations:
             # Calculer les ratios de prix actuel par rapport au prix initial
             current_prices = df.loc[time_step].values
             initial_prices = df.iloc[0].values
             price_ratios = current_prices / initial_prices
-            
+
             # Déterminer si on est en stratégie "bestoff" ou "worstoff"
             if self.strat == "best-off":
                 # Trouver le meilleur ratio de prix
@@ -165,15 +165,15 @@ class Autocall:
                 if min_ratio < worst_price_ratio:
                     worst_price_ratio = min_ratio
                     selected_df = df
-        
+
         # Retourner le DataFrame du meilleur ou pire sous-jacent selon la stratégie
         return selected_df
-    
+
 
     def calculate_average_present_value(self):
         """Calcule la valeur présente moyenne pour chaque actif et la moyenne globale."""
         total_discounted = self.payoffs_discount.sum(axis=0)  # Sum along rows to get the sum of all discount flows for each simulation
-        average_price =  total_discounted.mean()  # Calculate the mean across all simulations for the current asset
+        average_price = total_discounted.mean()  # Calculate the mean across all simulations for the current asset
         self.average_price = average_price / self.nominal * 100
 
     def print_average_present_values(self):
@@ -203,4 +203,3 @@ class Autocall:
                                        zip(self.monte_carlo.observation_dates, autocall_probabilities)}
 
         return autocall_probabilities_dict
-

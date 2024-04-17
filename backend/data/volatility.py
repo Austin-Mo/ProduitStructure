@@ -75,8 +75,8 @@ class Volatility:
             volatility_surface = pd.DataFrame()
 
             # Calculate implied volatility for calls and puts
-            calls['Implied_Volatility'] = calls.apply(lambda row: fsolve(error_function, 0.2, args=(row['Last_Price'], row['Strike'], (date - self.pricing_date).days / 365.0, r, d, self.spot_price, 'call'))[0], axis=1)
-            puts['Implied_Volatility'] = puts.apply(lambda row: fsolve(error_function, 0.2, args=(row['Last_Price'], row['Strike'], (date - self.pricing_date).days / 365.0, r, d, self.spot_price, 'put'))[0], axis=1)
+            calls['Implied_Volatility'] = calls.apply(lambda row: fsolve(error_function, 0.1, args=(row['Last_Price'], row['Strike'], (date - self.pricing_date).days / 365.0, r, d, self.spot_price, 'call'))[0], axis=1)
+            puts['Implied_Volatility'] = puts.apply(lambda row: fsolve(error_function, 0.1, args=(row['Last_Price'], row['Strike'], (date - self.pricing_date).days / 365.0, r, d, self.spot_price, 'put'))[0], axis=1)
 
             # Concatenate calls and puts and add to the volatility surface DataFrame
             volatility_surface = pd.concat([volatility_surface, pd.concat([puts, calls])])

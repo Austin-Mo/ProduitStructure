@@ -108,7 +108,7 @@ else:
                     observation_frequency=observation_frequency)
 
         autocall = Autocall(monte_carlo=monte_carlo,
-                            strat = selected_strat,
+                            strat=selected_strat,
                             nominal=nominal,
                             coupon_rate=coupon_rate,
                             coupon_barrier=coupon_barrier,
