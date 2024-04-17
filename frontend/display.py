@@ -2,25 +2,33 @@ import matplotlib.pyplot as plt
 import streamlit as st
 import pandas as pd
 import matplotlib.dates as mdates
+from scipy.interpolate import griddata
+import numpy as np
 import plotly.graph_objects as go
+
 
 def plot_volatility_surface_streamlit(stocks_list):
     for stock in stocks_list:
         volatility_df = stock.volatility_surface.data.copy()
         volatility_df['Maturity_Date'] = pd.to_datetime(volatility_df['Maturity_Date'])
-
-        # Convertir explicitement les données en types appropriés
-        volatility_df['Maturity_Days'] = volatility_df['Maturity_Days'].astype(float)
+        volatility_df['Dates_In_Years'] = volatility_df['Dates_In_Years'].astype(float)
         volatility_df['Strike'] = volatility_df['Strike'].astype(float)
-        volatility_df['Implied_Volatility'] = volatility_df['Implied_Volatility'].abs()
 
-        fig = go.Figure(data=[go.Surface(z=volatility_df['Implied_Volatility'],
-                                         x=volatility_df['Maturity_Days'],
-                                         y=volatility_df['Strike'],
-                                         colorscale='Viridis')])
-        fig.update_layout(title=f'Implied Volatility Surface for {stock.ticker}', autosize=False,
-                          width=500, height=500,
-                          margin=dict(l=65, r=50, b=65, t=90))
+        x = np.linspace(volatility_df['Dates_In_Years'].min(), volatility_df['Dates_In_Years'].max(),
+                        len(volatility_df['Dates_In_Years'].unique()))
+        y = np.linspace(volatility_df['Strike'].min(), volatility_df['Strike'].max(),
+                        len(volatility_df['Strike'].unique()))
+        X, Y = np.meshgrid(x, y)
+        Z = griddata((volatility_df['Dates_In_Years'], volatility_df['Strike']), volatility_df['Implied_Volatility'],
+                     (X, Y), method='cubic')
+
+        fig = go.Figure(data=[go.Surface(z=Z, x=X, y=Y, colorscale='Viridis')])
+
+        fig.update_layout(title=f'Implied Volatility Surface for {stock.ticker}', autosize=True,
+                          scene=dict(
+                              xaxis_title='Dates_In_Years',
+                              yaxis_title='Strike',
+                              zaxis_title='Implied_Volatility'))
 
         st.plotly_chart(fig)
 
