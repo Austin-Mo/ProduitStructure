@@ -49,15 +49,14 @@ class Autocall:
         return np.exp(-self.risk_free.interpolate_rate(date=date) * time)
 
     def generate_payoffs(self):
-
         # Obtenir le nombre d'étapes et de simulations pour l'actif actuel
         num_steps = len(self.monte_carlo.observation_dates)
         num_simulations = self.monte_carlo.num_simu
 
-        # Initialiser des tableaux pour stocker les payoffs et les payoffs actualisés à chaque étape pour chaque
-        # simulation
+        # Initialiser des tableaux pour stocker les payoffs, les payoffs actualisés et les autocalls à chaque étape pour chaque simulation
         payoffs_actif = np.zeros((num_steps, num_simulations))
         discounted_payoffs_actif = np.zeros((num_steps, num_simulations))
+        autocall_matrix = np.zeros((num_steps, num_simulations))  # Nouvelle matrice pour stocker les autocalls
 
         if self.strat == "mono":
             df = self.monte_carlo.simulations[0]
@@ -65,12 +64,13 @@ class Autocall:
             df = self.choice_asset_worstoff_bestoff()
 
         for step, time_step in enumerate(self.monte_carlo.observation_dates):
-            total_payment, no_redemption_condition = self.payoff_by_step(df, step, time_step)
+            total_payment, no_redemption_condition, autocall_occurred = self.payoff_by_step(df, step, time_step)
 
-            # Stocker le paiement total et le paiement total actualisé à l'étape courante
+            # Stocker le paiement total, le paiement total actualisé et les autocalls à l'étape courante
             payoffs_actif[step, :] = total_payment
             discount = self.discount_factor(step, num_steps)
             discounted_payoffs_actif[step, :] = (total_payment * discount)
+            autocall_matrix[step, :] = autocall_occurred
 
         # ------------------------------------------------------------------------------------------------------------
         # Barrière Put
@@ -101,6 +101,8 @@ class Autocall:
                                   columns=[f'Simulation {sim + 1}' for sim in range(num_simulations)])
         df_discounted_payoffs = pd.DataFrame(discounted_payoffs_actif, index=self.monte_carlo.observation_dates,
                                              columns=[f'Simulation {sim + 1}' for sim in range(num_simulations)])
+        self.autocall_matrix = autocall_matrix
+
         return df_payoffs, df_discounted_payoffs
 
     def payoff_by_step(self, df, step, time_step):
@@ -138,7 +140,11 @@ class Autocall:
         redemption_payment = self.nominal * autocall_condition * no_redemption_condition
         total_payment = coupon_payment + redemption_payment
 
-        return total_payment, no_redemption_condition
+        autocall_occurred = np.zeros_like(total_payment)
+        if step != (num_steps - 1):
+            autocall_occurred[autocall_condition & no_redemption_condition] = 1
+
+        return total_payment, no_redemption_condition, autocall_occurred
 
     def choice_asset_worstoff_bestoff(self):
         normalized_dfs = [df / df.iloc[0, 0] for df in self.monte_carlo.simulations]
@@ -169,19 +175,11 @@ class Autocall:
         print(f"Prix moyen final sur tous les actifs: {self.overall_average:.2f} €")
 
     def calculate_autocall_probabilities(self):
-        autocall_occurrences = [0] * len(self.monte_carlo.observation_dates)
-        num_simulations = self.monte_carlo.simulations[0].shape[1]
-
-        for step, time_step in enumerate(self.monte_carlo.observation_dates):
-            for df in self.monte_carlo.simulations:
-                current_prices = df.loc[time_step].values
-                initial_prices = df.iloc[0].values
-                price_ratios = current_prices / initial_prices
-                autocall_condition = price_ratios >= self.autocall_barrier
-                autocall_occurrences[step] += np.sum(autocall_condition)
-
-        autocall_probabilities = [occ / num_simulations for occ in autocall_occurrences]
+        num_simulations = self.monte_carlo.num_simu
+        autocall_occurrences = self.autocall_matrix.sum(axis=1)
+        autocall_probabilities = autocall_occurrences / num_simulations
         autocall_probabilities_dict = {date.strftime('%Y-%m-%d'): prob for date, prob in
                                        zip(self.monte_carlo.observation_dates, autocall_probabilities)}
-
-        return autocall_probabilities_dict
+        df_proba = pd.DataFrame(list(autocall_probabilities_dict.items()), columns=['Date de constatation',
+                                                                                    'Probabilité'])
+        return df_proba.T

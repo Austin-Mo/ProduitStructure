@@ -59,7 +59,7 @@ else:
     with cols2[1]:
         put_barrier = st.number_input("Barrière put", value=0.8, key='put_barrier')
     with cols2[2]:
-        coupon_barrier = st.number_input("Barrière de coupon", value=1.1, key='coupon_barrier')
+        coupon_barrier = st.number_input("Barrière de coupon", value=1.05, key='coupon_barrier')
     with cols2[3]:
         autocall_barrier = st.number_input("Barrière d'autocall", value=1.15, key='autocall_barrier')
 
@@ -123,12 +123,13 @@ else:
         plot_simulations_streamlit(autocall)
 
         autocall.calculate_average_present_value()
-        probas = autocall.calculate_autocall_probabilities()
+
+        st.write(f"Probabilité d'autocall:")
+        st.dataframe(autocall.calculate_autocall_probabilities())
 
         st.markdown("---")
 
         if selected_strat == "mono-asset":
-
             st.write(f"Payoffs DataFrame for stratégie{selected_strat} with stock {autocall.monte_carlo.stocks}:")
             st.dataframe(autocall.payoffs)
         else:
