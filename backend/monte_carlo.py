@@ -6,7 +6,7 @@ import pandas as pd
 
 
 class MonteCarlo:
-    def __init__(self, stocks, start_date, end_date, num_simu=10000, day_conv=360, seed=0,
+    def __init__(self, stocks, start_date, end_date, num_simu=10000, day_conv=360, seed=None,
                  observation_frequency='monthly'):
         """
         Initialisation avec prise en compte de la fréquence d'observation.
