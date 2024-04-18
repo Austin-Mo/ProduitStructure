@@ -112,24 +112,3 @@ class Volatility:
         puts = puts[(puts['Strike'] > moneyness_range[0] * self.spot_price) &
                     (puts['Strike'] < self.spot_price)]
         return calls, puts
-
-    def plot_volatility_surface(self):
-        fig = plt.figure(figsize=(10, 6))
-        ax = fig.add_subplot(111, projection='3d')
-
-        self.data['Maturity_Date'] = pd.to_datetime(self.data['Maturity_Date'])
-        self.data['Date_Num'] = matplotlib.dates.date2num(self.data['Maturity_Date'])
-
-        ax.plot_trisurf(self.data['Date_Num'], self.data['Strike'],
-                        self.data['Implied_Volatility'], cmap=cm.coolwarm, linewidth=0.2)
-
-        ax.xaxis.set_major_locator(matplotlib.dates.YearLocator())
-        ax.xaxis.set_major_formatter(matplotlib.dates.DateFormatter('%Y'))
-
-        ax.set_xlabel('Date')
-        ax.set_ylabel('Strike Price')
-        ax.set_zlabel('Implied Volatility')
-
-        ax.set_title('Implied Volatility Surface')
-
-        plt.show()
