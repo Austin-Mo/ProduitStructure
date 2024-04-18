@@ -16,12 +16,12 @@ if start_date > end_date:
     st.error("La date de fin doit être postérieure à la date de début.")
 else:
 
-    st.subheader("Stratégie") 
+    st.subheader("Stratégie")
 
     name_to_ticker = {
-    "Apple": "AAPL US Equity",
-    "Microsoft": "MSFT US Equity",
-    "Google": "GOOGL US Equity",
+        "Apple": "AAPL US Equity",
+        "Microsoft": "MSFT US Equity",
+        "Google": "GOOGL US Equity",
     }
 
     # Liste prédéfinie des sous-jacents disponibles pour la sélection
@@ -37,7 +37,6 @@ else:
                                               list(name_to_ticker.keys()), default=list(name_to_ticker.keys()))
         if len(selected_stocks_keys) < 2:
             st.error("Veuillez sélectionner au moins deux sous-jacents pour les stratégies Worst-Of et Best-Of.")
-        
 
     # Paramètres de simulation - Première ligne
     st.header("Paramètres de simulation")
@@ -51,7 +50,6 @@ else:
         day_conv = st.selectbox("Date de convention", [360, 365], key='day_conv')
     with cols[3]:
         seed = st.number_input("Seed ", value=272, format="%d", key='seed')
-        
 
     # Paramètres de simulation - Deuxième ligne
     cols2 = st.columns([1, 1, 1, 1])
@@ -97,21 +95,22 @@ else:
             'Microsoft': ('MSFT US Equity'),
             'Google': ('GOOGL US Equity'),
         }
-        selected_stocks = [StockData(ticker=data, pricing_date=start_date.strftime('%Y%m%d')) for key, data in stock_data.items() if key in selected_stocks_keys]
+        selected_stocks = [StockData(ticker=data, pricing_date=start_date.strftime('%Y%m%d')) for key, data in
+                           stock_data.items() if key in selected_stocks_keys]
 
         if show_rates:
-            plot_rate_curve(selected_stocks[0])  #
+            plot_rate_curve(selected_stocks[0])
 
         if show_volatility:
             plot_volatility_surface_streamlit(selected_stocks)
 
         monte_carlo = MonteCarlo(stocks=selected_stocks,
-                    start_date=start_date.strftime("%Y-%m-%d"),
-                    end_date=end_date.strftime("%Y-%m-%d"),
-                    num_simu=num_simu,
-                    day_conv=day_conv,
-                    seed=seed,
-                    observation_frequency=observation_frequency)
+                                 start_date=start_date.strftime("%Y-%m-%d"),
+                                 end_date=end_date.strftime("%Y-%m-%d"),
+                                 num_simu=num_simu,
+                                 day_conv=day_conv,
+                                 seed=seed,
+                                 observation_frequency=observation_frequency)
 
         autocall = Autocall(monte_carlo=monte_carlo,
                             strat=selected_strat,
@@ -127,9 +126,9 @@ else:
         probas = autocall.calculate_autocall_probabilities()
 
         st.markdown("---")
-        
+
         if selected_strat == "mono-asset":
-        
+
             st.write(f"Payoffs DataFrame for stratégie{selected_strat} with stock {autocall.monte_carlo.stocks}:")
             st.dataframe(autocall.payoffs)
         else:

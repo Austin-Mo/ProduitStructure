@@ -6,7 +6,8 @@ import pandas as pd
 
 
 class MonteCarlo:
-    def __init__(self, stocks, start_date, end_date, num_simu=10000, day_conv=360, seed=None, observation_frequency='monthly'):
+    def __init__(self, stocks, start_date, end_date, num_simu=10000, day_conv=360, seed=0,
+                 observation_frequency='monthly'):
         """
         Initialisation avec prise en compte de la fréquence d'observation.
         """
@@ -51,7 +52,7 @@ class MonteCarlo:
         dates = pd.date_range(start=self.start_date, end=self.end_date, freq=freq).normalize()
 
         return dates
-    
+
     def generate_correlated_shocks(self):
         """
         Génère des chocs corrélés pour tous les sous-jacents en utilisant la décomposition de Cholesky.
@@ -59,10 +60,10 @@ class MonteCarlo:
         if self.seed is not None:
             np.random.seed(self.seed)
         L = np.linalg.cholesky(self.correlation_matrix)
-        z_uncorrelated = np.random.normal(0.0, 1.0, (self.num_time_steps, self.num_simu, len(self.spots))) * self.delta_t ** 0.5
+        z_uncorrelated = np.random.normal(0.0, 1.0,
+                                          (self.num_time_steps, self.num_simu, len(self.spots))) * self.delta_t ** 0.5
         self.z = np.einsum('ij, tkj -> tki', L, z_uncorrelated)
 
-   
     def simulate_correlated_prices(self):
         """
         Simule les chemins de prix pour tous les sous-jacents en utilisant les chocs corrélés.
@@ -97,7 +98,8 @@ class MonteCarlo:
         dataframes = []
         for asset_index in range(simu.shape[2]):
             asset_data = simu[:, :, asset_index]
-            df = pd.DataFrame(asset_data, index=self.simulation_dates, columns=[f'{sim+1}' for sim in range(self.num_simu)])
+            df = pd.DataFrame(asset_data, index=self.simulation_dates,
+                              columns=[f'{sim + 1}' for sim in range(self.num_simu)])
             dataframes.append(df)
 
         return dataframes

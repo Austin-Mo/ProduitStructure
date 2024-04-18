@@ -3,6 +3,7 @@ import json
 from backend.data.volatility import Volatility
 from backend.data.rate_curve import ZeroCouponCurve
 
+
 class StockData:
     def __init__(self, ticker, pricing_date):
         """
@@ -17,14 +18,13 @@ class StockData:
         self.rate_curve = ZeroCouponCurve(date=pricing_date)
         self.volatility_surface = Volatility(self, pricing_date, self.rate_curve)
 
-
     def get_dividend_yield(self):
         with open('backend/data/dividend_yield_data.json', 'r') as file:
             dividend_yield = json.load(file)
         df = pd.DataFrame(dividend_yield['data'], columns=dividend_yield['columns'], index=dividend_yield['index'])
         df.index = pd.to_datetime(df.index, unit='ms')
         ticker_dividend_yield = df.loc[:, self.ticker].iloc[0]
-        return ticker_dividend_yield/100
+        return ticker_dividend_yield / 100
 
     def get_spot_price(self):
         with open('backend/data/spot_data.json', 'r') as file:

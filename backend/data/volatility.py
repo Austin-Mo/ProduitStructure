@@ -11,6 +11,7 @@ from dateutil.relativedelta import relativedelta
 
 pd.options.mode.chained_assignment = None
 
+
 def split_equity_info(equity_info):
     components = equity_info.split()
     ticker = components[0].replace("('", "")
@@ -18,6 +19,7 @@ def split_equity_info(equity_info):
     option_type = components[3][0]  # 'C' or 'P'
     strike = components[3][1:]
     return pd.Series([ticker, option_type, maturity_date, strike])
+
 
 def read_bloomberg_data(file_path):
     with open(file_path, 'r') as f:
@@ -73,8 +75,12 @@ class Volatility:
             volatility_surface = pd.DataFrame()
 
             # Calculate implied volatility for calls and puts
-            calls['Implied_Volatility'] = calls.apply(lambda row: fsolve(error_function, 0.2, args=(row['Last_Price'], row['Strike'], (date - self.pricing_date).days / 365.0, r, d, self.spot_price, 'call'))[0], axis=1)
-            puts['Implied_Volatility'] = puts.apply(lambda row: fsolve(error_function, 0.2, args=(row['Last_Price'], row['Strike'], (date - self.pricing_date).days / 365.0, r, d, self.spot_price, 'put'))[0], axis=1)
+            calls['Implied_Volatility'] = calls.apply(lambda row: fsolve(error_function, 0.2, args=(
+            row['Last_Price'], row['Strike'], (date - self.pricing_date).days / 365.0, r, d, self.spot_price, 'call'))[
+                0], axis=1)
+            puts['Implied_Volatility'] = puts.apply(lambda row: fsolve(error_function, 0.2, args=(
+            row['Last_Price'], row['Strike'], (date - self.pricing_date).days / 365.0, r, d, self.spot_price, 'put'))[
+                0], axis=1)
 
             # Concatenate calls and puts and add to the volatility surface DataFrame
             volatility_surface = pd.concat([volatility_surface, pd.concat([puts, calls])])
@@ -82,6 +88,7 @@ class Volatility:
             # Pour l'interpolation
             def calculate_years(date):
                 return (date - self.pricing_date).days / 365.0
+
             volatility_surface['Dates_In_Years'] = volatility_surface['Maturity_Date'].apply(calculate_years)
 
         # Filtre par maturité
@@ -92,7 +99,7 @@ class Volatility:
         q_low = volatility_surface['Implied_Volatility'].quantile(0.10)
         q_high = volatility_surface['Implied_Volatility'].quantile(0.90)
         volatility_surface = volatility_surface[(volatility_surface['Implied_Volatility'] >= q_low) & (
-                    volatility_surface['Implied_Volatility'] <= q_high)]
+                volatility_surface['Implied_Volatility'] <= q_high)]
 
         return volatility_surface
 

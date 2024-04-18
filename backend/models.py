@@ -54,7 +54,8 @@ class Autocall:
         num_steps = len(self.monte_carlo.observation_dates)
         num_simulations = self.monte_carlo.num_simu
 
-        # Initialiser des tableaux pour stocker les payoffs et les payoffs actualisés à chaque étape pour chaque simulation
+        # Initialiser des tableaux pour stocker les payoffs et les payoffs actualisés à chaque étape pour chaque
+        # simulation
         payoffs_actif = np.zeros((num_steps, num_simulations))
         discounted_payoffs_actif = np.zeros((num_steps, num_simulations))
 
@@ -71,8 +72,8 @@ class Autocall:
             discount = self.discount_factor(step, num_steps)
             discounted_payoffs_actif[step, :] = (total_payment * discount)
 
-        # --------------------------------------------------------------------------------------------------------------------------------
-        # Part put barrière
+        # ------------------------------------------------------------------------------------------------------------
+        # Barrière Put
         filter_df = df.loc[self.monte_carlo.observation_dates]
         # Je regarde le plus petit ratio de prix sur toutes les observations dates
         initial_prices = df.iloc[0].values
@@ -83,7 +84,8 @@ class Autocall:
 
         # Boucle sur toutes les simulations
         for i in range(len(no_redemption_condition)):
-            # Si il n'y a pas eu déjà de redemption, que le barrière put a au moins été franchit une fois et que le dernier prix est inférieur au prix initial alors il faut imputer la perte
+            # Si il n'y a pas eu déjà de redemption, que le barrière put a au moins été franchit une fois et que le
+            # dernier prix est inférieur au prix initial alors il faut imputer la perte
             if no_redemption_condition[i] and put_condition[i] and (final_price_ratios[i] < 1):
                 # J'annule tous les paiements de coupons précédents
                 payoffs_actif[:, i] = discounted_payoffs_actif[:, i] = 0
@@ -92,7 +94,7 @@ class Autocall:
 
                 discount = self.discount_factor(num_steps, num_steps)
                 discounted_payoffs_actif[-1, i] = (payoffs_actif[-1, i] * discount)
-        # --------------------------------------------------------------------------------------------------------------------------------
+        # ------------------------------------------------------------------------------------------------------------
 
         # Créer des DataFrames pour les payoffs et les payoffs actualisés et les ajouter aux listes
         df_payoffs = pd.DataFrame(payoffs_actif, index=self.monte_carlo.observation_dates,
@@ -124,7 +126,8 @@ class Autocall:
             no_redemption_condition = True
 
         num_steps = len(self.monte_carlo.observation_dates)
-        # À la dernière étape, s'assurer de payer le nominal si la barrière put n'a pas été franchit et si les conditions d'autocall ne sont pas remplies
+        # À la dernière étape, s'assurer de payer le nominal si la barrière put n'a pas été franchit et si les
+        # conditions d'autocall ne sont pas remplies
         if step == (num_steps - 1):
             for i in range(len(no_redemption_condition)):
                 if bool(no_redemption_condition[i]):
@@ -138,27 +141,21 @@ class Autocall:
         return total_payment, no_redemption_condition
 
     def choice_asset_worstoff_bestoff(self):
-        # Normaliser chaque DataFrame par sa première valeur (ligne 0, colonne 0)
         normalized_dfs = [df / df.iloc[0, 0] for df in self.monte_carlo.simulations]
 
-        # Utiliser np.maximum.reduce pour trouver le DataFrame avec les valeurs maximales pour "best-off"
         if self.strat == "best-off":
             max_df = np.maximum.reduce(normalized_dfs)
-        # Utiliser np.minimum.reduce pour trouver le DataFrame avec les valeurs minimales pour "worst-off"
         else:
             max_df = np.minimum.reduce(normalized_dfs)
 
-        # Convertir le résultat en DataFrame
         result_df = pd.DataFrame(max_df, index=self.monte_carlo.simulations[0].index,
                                  columns=self.monte_carlo.simulations[0].columns)
-
         return result_df
 
     def calculate_average_present_value(self):
         """Calcule la valeur présente moyenne pour chaque actif et la moyenne globale."""
-        total_discounted = self.payoffs_discount.sum(
-            axis=0)  # Sum along rows to get the sum of all discount flows for each simulation
-        average_price = total_discounted.mean()  # Calculate the mean across all simulations for the current asset
+        total_discounted = self.payoffs_discount.sum(axis=0)
+        average_price = total_discounted.mean()
         self.average_price = average_price / self.nominal * 100
 
     def print_average_present_values(self):
@@ -167,7 +164,7 @@ class Autocall:
             self.calculate_average_present_value()
 
         for stock, value in zip(self.monte_carlo.stocks, self.average_price):
-            print(f"Prix moyen final pour {stock.ticker}: {value:.2f} €")  # Utilisation de `stock.name`
+            print(f"Prix moyen final pour {stock.ticker}: {value:.2f} €")
 
         print(f"Prix moyen final sur tous les actifs: {self.overall_average:.2f} €")
 

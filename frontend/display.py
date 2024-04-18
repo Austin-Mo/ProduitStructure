@@ -19,8 +19,8 @@ def plot_volatility_surface_streamlit(stocks_list):
         y = np.linspace(volatility_df['Strike'].min(), volatility_df['Strike'].max(),
                         len(volatility_df['Strike'].unique()))
         X, Y = np.meshgrid(x, y)
-        Z = griddata((volatility_df['Dates_In_Years'], volatility_df['Strike']), volatility_df['Implied_Volatility'],
-                     (X, Y), method='cubic')
+        Z = griddata((volatility_df['Dates_In_Years'], volatility_df['Strike']),
+                     volatility_df['Implied_Volatility'], (X, Y), method='cubic')
 
         fig = go.Figure(data=[go.Surface(z=Z, x=X, y=Y, colorscale='Viridis')])
 
