@@ -1,7 +1,6 @@
 import pandas as pd
 import json
 
-
 def get_correlation(stocks):
     with open('backend/data/correlation_matrix.json', 'r') as file:
         correlation = json.load(file)

@@ -54,17 +54,6 @@ class ZeroCouponCurve:
 
         return df/100
 
-    def plot_rate_curve(self):
-        """
-        Tracer la courbe des taux.
-        """
-        plt.figure(figsize=(10, 6))
-        plt.plot(self.data.index, self.data['rates'])
-        plt.title('Courbe des taux')
-        plt.xlabel('Date')
-        plt.ylabel('Taux')
-        plt.show()
-
     def interpolate_rate(self, date):
         """
         Interpole la courbe des taux pour une date cible.

@@ -3,7 +3,7 @@ import pandas as pd
 from backend.monte_carlo import MonteCarlo
 from backend.models import Autocall
 from backend.data.stock_data import StockData
-from frontend.display import plot_volatility_surface_streamlit, plot_simulations_streamlit
+from frontend.display import plot_volatility_surface_streamlit, plot_simulations_streamlit, plot_rate_curve
 
 st.title("Simulation de produits autocallables")
 
@@ -26,12 +26,17 @@ else:
 
     # Liste prédéfinie des sous-jacents disponibles pour la sélection
 
-    selected_strat = st.selectbox("Choisissez la stratégie souhaitée", ["worst-off", "best-off", "mono-asset"], key='strat_choice')
+    selected_strat = st.selectbox("Choisissez la stratégie souhaitée", ["worst-off", "best-off", "mono-asset"],
+                                  key='strat_choice')
 
     if selected_strat == "mono-asset":
-        selected_stocks_keys = st.selectbox("Choisissez le sous-jacent pour la stratégie Mono-jacent", list(name_to_ticker.keys()), key='stock_mono')
+        selected_stocks_keys = st.selectbox("Choisissez le sous-jacent pour la stratégie Mono-jacent",
+                                            list(name_to_ticker.keys()), key='stock_mono')
     else:
-        selected_stocks_keys = st.multiselect("Choisissez les sous-jacents pour la strat Worst-Of et Best-Of", list(name_to_ticker.keys()), default=list(name_to_ticker.keys()))
+        selected_stocks_keys = st.multiselect("Choisissez les sous-jacents pour la strat Worst-Of et Best-Of",
+                                              list(name_to_ticker.keys()), default=list(name_to_ticker.keys()))
+        if len(selected_stocks_keys) < 2:
+            st.error("Veuillez sélectionner au moins deux sous-jacents pour les stratégies Worst-Of et Best-Of.")
         
 
     # Paramètres de simulation - Première ligne
@@ -62,6 +67,8 @@ else:
 
     observation_frequency = st.selectbox("Fréquence d'observation",
                                          ['monthly', 'quarterly', 'semiannually', 'annually'], index=0)
+
+    show_rates = st.checkbox("Afficher la courbe des taux des sous-jacents")
     show_volatility = st.checkbox("Afficher les surfaces de volatilité implicite des sous-jacents")
 
     # Bouton de simulation au centre
@@ -92,6 +99,9 @@ else:
         }
         selected_stocks = [StockData(ticker=data, pricing_date=start_date.strftime('%Y%m%d')) for key, data in stock_data.items() if key in selected_stocks_keys]
 
+        if show_rates:
+            plot_rate_curve(selected_stocks[0])  #
+
         if show_volatility:
             plot_volatility_surface_streamlit(selected_stocks)
 
@@ -104,7 +114,7 @@ else:
                     observation_frequency=observation_frequency)
 
         autocall = Autocall(monte_carlo=monte_carlo,
-                            strat = selected_strat,
+                            strat=selected_strat,
                             nominal=nominal,
                             coupon_rate=coupon_rate,
                             coupon_barrier=coupon_barrier,
@@ -125,7 +135,6 @@ else:
         else:
             st.write(f"Payoffs DataFrame for stratégie {selected_strat}:")
             st.dataframe(autocall.payoffs)
-
 
         st.markdown("---")
         st.markdown(f"""

@@ -69,3 +69,19 @@ def plot_simulations_streamlit(autocall):
         ax.legend()
 
         st.pyplot(fig)
+
+
+def plot_rate_curve(stock):
+    """
+    Tracer la courbe des taux.
+    """
+    plt.figure(figsize=(10, 6))
+    plt.plot(stock.rate_curve.data.index, stock.rate_curve.data['rates'], color='blue', linestyle='-',
+             marker='o', markersize=4)
+    plt.title('Courbe des taux', fontsize=20, fontweight='bold')
+    plt.xlabel('Date', fontsize=14)
+    plt.ylabel('Taux', fontsize=14)
+    plt.grid(True, linestyle='--', alpha=0.6)
+    plt.xticks(fontsize=12)
+    plt.yticks(fontsize=12)
+    st.pyplot(plt)

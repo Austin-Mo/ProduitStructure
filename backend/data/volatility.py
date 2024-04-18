@@ -4,14 +4,12 @@ import pandas as pd
 import numpy as np
 from backend.models import Models
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import cm
 import matplotlib.dates
 import json
 from dateutil.relativedelta import relativedelta
 
-
-pd.options.mode.chained_assignment = None  # default='warn'
+pd.options.mode.chained_assignment = None
 
 def split_equity_info(equity_info):
     components = equity_info.split()
