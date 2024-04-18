@@ -53,7 +53,8 @@ class Autocall:
         num_steps = len(self.monte_carlo.observation_dates)
         num_simulations = self.monte_carlo.num_simu
 
-        # Initialiser des tableaux pour stocker les payoffs, les payoffs actualisés et les autocalls à chaque étape pour chaque simulation
+        # Initialiser des tableaux pour stocker les payoffs, les payoffs actualisés et les autocalls à chaque
+        # étape pour chaque simulation
         payoffs_actif = np.zeros((num_steps, num_simulations))
         discounted_payoffs_actif = np.zeros((num_steps, num_simulations))
         autocall_matrix = np.zeros((num_steps, num_simulations))  # Nouvelle matrice pour stocker les autocalls
