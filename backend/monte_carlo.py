@@ -1,10 +1,9 @@
 import numpy as np
 from datetime import datetime
 from scipy.interpolate import NearestNDInterpolator, interp1d
-from backend.data.correlation import *
+from backend.data.correlation import get_correlation
 import pandas as pd
-from pandas.tseries.offsets import BDay
-import matplotlib.pyplot as plt
+
 
 class MonteCarlo:
     def __init__(self, stocks, start_date, end_date, num_simu=10000, day_conv=360, seed=None, observation_frequency='monthly'):
@@ -24,7 +23,6 @@ class MonteCarlo:
         self.delta_t = self.maturity / day_conv
         self.seed = seed
 
-        #part Cyprien
         self.simulation_dates = pd.date_range(start=self.start_date, end=self.end_date).normalize()
         self.num_steps = None
         self.observation_frequency = observation_frequency
@@ -38,7 +36,6 @@ class MonteCarlo:
         """
         Génère les dates d'observations basées sur la fréquence et ajuste selon les jours ouvrables.
         """
-        
         if self.observation_frequency == 'monthly':
             freq = 'BM'
         elif self.observation_frequency == 'quarterly':

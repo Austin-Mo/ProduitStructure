@@ -36,14 +36,16 @@ else:
 
     # Paramètres de simulation - Première ligne
     st.header("Paramètres de simulation")
-    cols = st.columns([1, 1, 1])
+    cols = st.columns([1, 1, 1, 1])
 
     with cols[0]:
-        nominal = st.number_input("Valeur nominale", value=1000, key='nominal')
+        nominal = st.number_input("Valeur nominale", value=100, key='nominal')
     with cols[1]:
-        num_simu = st.number_input("Nombre de simulations", value=100, format="%d", key='num_simu')
+        num_simu = st.number_input("Nombre de simulations", value=500, format="%d", key='num_simu')
     with cols[2]:
         day_conv = st.selectbox("Date de convention", [360, 365], key='day_conv')
+    with cols[3]:
+        seed = st.number_input("Seed ", value=272, format="%d", key='seed')
         
 
     # Paramètres de simulation - Deuxième ligne
@@ -56,17 +58,11 @@ else:
     with cols2[2]:
         coupon_barrier = st.number_input("Barrière de coupon", value=1.1, key='coupon_barrier')
     with cols2[3]:
-        autocall_barrier = st.number_input("Barrière d'autocall", value=1.3, key='autocall_barrier')
+        autocall_barrier = st.number_input("Barrière d'autocall", value=1.15, key='autocall_barrier')
 
-    # Paramètres supplémentaires si nécessaire
-    with st.expander("Plus de paramètres"):
-        observation_frequency = st.selectbox(
-        "Fréquence d'observation",
-        ['monthly', 'quarterly', 'semiannually', 'annually'],
-        index=0  # Choix par défaut à 'monthly'
-    )
-        seed = st.number_input("Seed ", value=24, format="%d", key='seed')
-        show_volatility = st.checkbox("Afficher les surfaces de volatilité implicite des sous-jacents")
+    observation_frequency = st.selectbox("Fréquence d'observation",
+                                         ['monthly', 'quarterly', 'semiannually', 'annually'], index=0)
+    show_volatility = st.checkbox("Afficher les surfaces de volatilité implicite des sous-jacents")
 
     # Bouton de simulation au centre
     st.markdown("""
@@ -139,6 +135,3 @@ else:
                 <span style='font-size: 2.5em;'>{autocall.average_price:.2f} %</span>
             </div>
             """, unsafe_allow_html=True)
-
-
-        
